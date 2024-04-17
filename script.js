@@ -101,7 +101,7 @@ class Rocket {
         this.height = height
         this.vel = vel
         this.health = health
-        this.healthText = createText(10, 80, "hello")
+        this.healthText = createText(10, 80, this.health)
         this.movement = [false, false]
         this.projectileObjects = []
         this.fireObjects = []
@@ -214,7 +214,7 @@ function createAsteroids() {
 }
 
 function createText(x, y, text) {
-    return new Text(x, y, text)
+    return new Text(x, y, text.toString())
 }
 
 class Text {
