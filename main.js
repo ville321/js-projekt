@@ -14,9 +14,13 @@ document.addEventListener('keydown', function(event) {
     const key = event.key
     if(key === 'a' || key === 'ArrowLeft') {
         rocket.movement[0] = true
-    } else if(key === 'd' || key === 'ArrowRight') {
+    }
+    
+    if(key === 'd' || key === 'ArrowRight') {
         rocket.movement[1] = true
-    } else if(key === ' ') {
+    }
+
+    if(key === ' ') {
         rocket.shoot()
     }
 })
@@ -25,7 +29,9 @@ document.addEventListener('keyup', function(event) {
     const key = event.key
     if(key === 'a' || key === 'ArrowLeft') {
         rocket.movement[0] = false
-    } else if(key === 'd' || key === 'ArrowRight') {
+    } 
+    
+    if(key === 'd' || key === 'ArrowRight') {
         rocket.movement[1] = false
     }
 })
@@ -123,17 +129,21 @@ class Rocket {
         this.movement = [false, false]
         this.projectileObjects = []
         this.fireObjects = []
+        this.ammoCount = 10
     }
 
     shoot() {
+        if (this.ammoCount > 0) {
         this.projectileObjects.push(new RocketProjectile(this.x + this.width/2, this.y, 4, -9))
+        this.ammoCount -= 1
     }
+}
 
     draw(asteroids) {
         c.beginPath()
         c.roundRect(this.x, this.y, this.width, this.height, 30)
         c.fillStyle = this.color
-        c.shadowBlur = 15
+        c.shadowBlur = 1
         c.shadowColor = this.color
         c.closePath()
         c.fill()
@@ -205,7 +215,7 @@ function Asteroid(x, y, radius, vel) {
                     new Flame(
                         randomInt(this.x-this.r, this.x+this.r),
                         randomInt(this.y-this.r, this.y+this.r),
-                        randomInt(4,  7),
+                        randomInt(4, 7),
                         randomInt(-5, 5),
                         randomInt(-5, 5),
                         colorArrayBlueFire[randomInt(0, 4)]
@@ -215,11 +225,6 @@ function Asteroid(x, y, radius, vel) {
         let finishedExploding = false
         for (let i = 0; i < this.explosionObjects.length; i++) {
             this.explosionObjects[i].update()
-            if (this.explosionObjects[i].r < 0.51) {
-                 finishedExploding = true
-            } else {
-                finishedExploding = false
-            }
         }
         if (finishedExploding === true) {
             this.reset()
@@ -238,7 +243,7 @@ function Asteroid(x, y, radius, vel) {
         c.beginPath()
         c.arc(this.x, this.y, this.r, 0, Math.PI * 2, false)
         c.fillStyle = this.color
-        c.shadowBlur = 12
+        c.shadowBlur = 10
         c.shadowColor = this.shadowColor
         c.closePath()
         c.fill()
@@ -291,7 +296,7 @@ class Text {
     }
 
     draw() {
-        c.shadowBlur = 5
+        c.shadowBlur = 2
         c.shadowColor = this.color
         c.fillStyle = this.color
         c.font = '50px Arial'
