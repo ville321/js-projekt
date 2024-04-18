@@ -112,6 +112,7 @@ class RocketProjectile {
     }
 
     update(asteroids) {
+        // Kollar om skotten träffar en asteroid
         for(let i = 0; i < asteroids.length; i++) {
             if (asteroids[i].x + asteroids[i].r > this.x &&
                 asteroids[i].x - asteroids[i].r < this.x &&
@@ -238,6 +239,7 @@ class Asteroid {
                     ))
             }
         }
+        // Loopar igenom alla explosions partiklar och uppdaterar + kollar om alla är färdigt exploderade
         this.finishedExploding = true
         for (let i = 0; i < this.explosionObjects.length; i++) {
             this.explosionObjects[i].update()
@@ -245,6 +247,7 @@ class Asteroid {
                 this.finishedExploding = false;
             }
         }
+        // Om asteroiden är färdig med explosionen så töms listan med objekten och resetar asteroiden
         if (this.finishedExploding === true) {
             this.explosionObjects.splice(0, this.explosionObjects.length)
             this.exploded = false
