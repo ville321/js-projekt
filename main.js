@@ -57,15 +57,19 @@ let colorArrayBlueFire = [
     '#5ad6ff'
 ]
 
-function Flame(x, y, radius, velX, velY, color) {
-    this.x = x
-    this.y = y
-    this.r = radius
-    this.vx = velX
-    this.vy = velY
-    this.color = color
+// Skapar objekt för partiklarna/effekterna som används i spelet
+class Particle {
+    constructor(x, y, radius, velX, velY, color) {
+        this.x = x
+        this.y = y
+        this.r = radius
+        this.vx = velX
+        this.vy = velY
+        this.color = color
+    }
 
-    this.draw = function() {
+
+    draw() {
         c.beginPath()
         c.arc(this.x, this.y, this.r, 0, Math.PI * 2, false)
         c.shadowBlur = 15
@@ -75,33 +79,39 @@ function Flame(x, y, radius, velX, velY, color) {
         c.fill()
     }
 
-    this.update = function() {
+    update() {
         this.x += this.vx
         this.y += this.vy
         if (this.r > 0.5) {
             this.r -= 0.1
             this.draw()
+        } else {
+            this.finished = true
         }
     }
 }
 
-function RocketProjectile(x, y, r, vel) {
-    this.x = x
-    this.y = y
-    this.r = r
-    this.vel = vel
-    this.color = 'white'
-    this.draw = function() {
+// Skapar objekt för skotten som skjuts av raketen
+class RocketProjectile {
+    constructor(x, y, r, vel) {
+        this.x = x
+        this.y = y
+        this.r = r
+        this.vel = vel
+        this.color = 'white'
+    }
+
+    draw() {
         c.beginPath()
         c.arc(this.x, this.y, this.r, 0, Math.PI * 2, false)
-        c.shadowBlur = 25
+        c.shadowBlur = 50
         c.shadowColor = this.color
         c.fillStyle = this.color
         c.closePath()
         c.fill()
     }
 
-    this.update = function(asteroids) {
+    update(asteroids) {
         for(let i = 0; i < asteroids.length; i++) {
             if (asteroids[i].x + asteroids[i].r > this.x &&
                 asteroids[i].x - asteroids[i].r < this.x &&
@@ -116,6 +126,7 @@ function RocketProjectile(x, y, r, vel) {
     }
 }
 
+// Skapar ett objekt för raketen
 class Rocket {
     constructor(x, y, width, height, vel, health) {
         this.x = x
@@ -125,19 +136,19 @@ class Rocket {
         this.vel = vel
         this.color = '#9171f8'
         this.health = health
-        this.healthText = createText(this.health, innerWidth * 0.02, innerHeight * 0.95)
+        this.healthText = createText(this.health, innerWidth * 0.02, innerHeight * 0.95, 'red')
         this.movement = [false, false]
         this.projectileObjects = []
         this.fireObjects = []
-        this.ammoCount = 10
+        this.ammoCount = 10000
     }
 
     shoot() {
         if (this.ammoCount > 0) {
         this.projectileObjects.push(new RocketProjectile(this.x + this.width/2, this.y, 4, -9))
         this.ammoCount -= 1
+        }
     }
-}
 
     draw(asteroids) {
         c.beginPath()
@@ -171,7 +182,7 @@ class Rocket {
         else if (this.x <= 0) {
             this.x = 0
         }
-
+        // Kollision med asteroiderna
         for(let i = 0; i < asteroids.length; i++) {
             if (asteroids[i].x + asteroids[i].r > this.x &&
                 asteroids[i].x - asteroids[i].r < this.x &&
@@ -182,9 +193,9 @@ class Rocket {
                 asteroids[i].explode()
             }
         }
-
+        // Skapar objekt för eld partiklarna bakom raketen
         this.fireObjects.push(
-            new Flame(
+            new Particle(
                 this.x + this.width / 2,
                 this.y + this.height,
                 (Math.random() * 5) + 2,
@@ -197,22 +208,27 @@ class Rocket {
     }
 }
 
-function Asteroid(x, y, radius, vel) {
-    this.x = x
-    this.y = y
-    this.r = radius
-    this.vel = vel
-    this.color = '#5bcfff'
-    this.shadowColor = '#5ad6ff'
-    this.exploded = false
-    this.explosionObjects = []
+// Skapar objekt för asteroiderna
+class Asteroid {
+    constructor(x, y, radius, vel) {
+        this.x = x
+        this.y = y
+        this.r = radius
+        this.vel = vel
+        this.color = '#5bcfff'
+        this.shadowColor = '#5ad6ff'
+        this.exploded = false
+        this.finishedExploding = true
+        this.explosionObjects = []
+    }
 
-    this.explode = function() {
+
+    explode() {
         this.exploded = true
         if (this.explosionObjects.length === 0) {
             for (let i = 0; i < randomInt(25, 30); i++) {
                 this.explosionObjects.push(
-                    new Flame(
+                    new Particle(
                         randomInt(this.x-this.r, this.x+this.r),
                         randomInt(this.y-this.r, this.y+this.r),
                         randomInt(4, 7),
@@ -222,24 +238,29 @@ function Asteroid(x, y, radius, vel) {
                     ))
             }
         }
-        let finishedExploding = false
+        this.finishedExploding = true
         for (let i = 0; i < this.explosionObjects.length; i++) {
             this.explosionObjects[i].update()
+            if (this.explosionObjects[i].r > 0.5) {
+                this.finishedExploding = false;
+            }
         }
-        if (finishedExploding === true) {
+        if (this.finishedExploding === true) {
+            this.explosionObjects.splice(0, this.explosionObjects.length)
+            this.exploded = false
             this.reset()
         }
         
     }
 
-    this.reset = function() {
+    reset() {
         this.y = -this.r
         this.x = randomInt(0, canvas.width - 100)
         this.r = randomInt(25, 50)
         this.vel = randomInt(2, 12)
     }
 
-    this.draw = function() {
+    draw() {
         c.beginPath()
         c.arc(this.x, this.y, this.r, 0, Math.PI * 2, false)
         c.fillStyle = this.color
@@ -249,7 +270,7 @@ function Asteroid(x, y, radius, vel) {
         c.fill()
     }
 
-    this.update = function() {
+    update() {
         if (this.exploded === false) {
             this.y += this.vel
             if(this.y >= canvas.height + this.r) {
@@ -283,16 +304,17 @@ function createAsteroids(count) {
     }
 }
 
-function createText(text, x, y) {
-    return new Text(text, x, y)
+function createText(text, x, y, color) {
+    return new Text(text, x, y, color)
 }
 
+// Skapar objekt för texten som visas i spelet
 class Text {
-    constructor(text, x, y) {
+    constructor(text, x, y, color) {
         this.x = x
         this.y = y
         this.txt = text
-        this.color = 'red'
+        this.color = color
     }
 
     draw() {
@@ -309,6 +331,7 @@ class Text {
     }
 }
 
+// Initialiserar spelet genom att skapa de objekt som behövs
 function initialize() {
     rocket = createRocket()
     createAsteroids(9)
@@ -316,13 +339,15 @@ function initialize() {
     animate()
 }
 
+
+// Main loopen för spelet
 function animate() {
     requestAnimationFrame(animate)
     c.clearRect(0, 0, innerWidth, innerHeight)
-    rocket.update(asteroidArray)
     for (let i = 0; i < asteroidArray.length; i++) {
         asteroidArray[i].update()
     }
+    rocket.update(asteroidArray)
 }
 
 let rocket
