@@ -2,36 +2,43 @@ canvas = document.querySelector('canvas')
 
 c = canvas.getContext('2d')
 
+const rocketPNG = document.getElementById('rocket')
+const stars1 = document.getElementById('stars1')
+const stars2 = document.getElementById('stars2')
+
 canvas.height = window.innerHeight
-canvas.width = window.innerWidth
+canvas.width = 700
 
 window.addEventListener('resize', function() {
     canvas.height = window.innerHeight
-    canvas.width = window.innerWidth
 })
 
 document.addEventListener('keydown', function(event) {
     const key = event.key
-    if(key === 'a' || key === 'ArrowLeft') {
+    if(key.toLowerCase() === 'a' || key === 'ArrowLeft') {
         rocket.movement[0] = true
     }
     
-    if(key === 'd' || key === 'ArrowRight') {
+    if(key.toLowerCase() === 'd' || key === 'ArrowRight') {
         rocket.movement[1] = true
     }
 
     if(key === ' ') {
         rocket.shoot()
     }
+
+    if(key === 'k') {
+        rocket.health = 100
+    }
 })
 
 document.addEventListener('keyup', function(event) {
     const key = event.key
-    if(key === 'a' || key === 'ArrowLeft') {
+    if(key.toLowerCase() === 'a' || key === 'ArrowLeft') {
         rocket.movement[0] = false
     } 
     
-    if(key === 'd' || key === 'ArrowRight') {
+    if(key.toLowerCase() === 'd' || key === 'ArrowRight') {
         rocket.movement[1] = false
     }
 })
@@ -129,7 +136,7 @@ class RocketProjectile {
 
 // Skapar ett objekt för raketen
 class Rocket {
-    constructor(x, y, width, height, vel, health) {
+    constructor(x, y, width, height, vel, health, rocketImage) {
         this.x = x
         this.y = y
         this.width = width
@@ -142,6 +149,7 @@ class Rocket {
         this.projectileObjects = []
         this.fireObjects = []
         this.ammoCount = 10000
+        this.rocketImage = rocketImage
     }
 
     shoot() {
@@ -152,23 +160,21 @@ class Rocket {
     }
 
     draw(asteroids) {
-        c.beginPath()
-        c.roundRect(this.x, this.y, this.width, this.height, 30)
-        c.fillStyle = this.color
-        c.shadowBlur = 1
-        c.shadowColor = this.color
-        c.closePath()
-        c.fill()
+        c.shadowColor = 'red'
+        c.drawImage(this.rocketImage, this.x, this.y, this.width, this.height)
         for(let i = 0; i < this.fireObjects.length; i++) {
             this.fireObjects[i].update()
         }
         for(let i = 0; i < this.projectileObjects.length; i++) {
             this.projectileObjects[i].update(asteroids)
         }
-        this.healthText.update(this.health)
+        this.healthText.update(this.health, innerWidth * 0.02, innerHeight * 0.95)
     }
 
     update(asteroids) {
+        // Uppdaterar y positionen ifall man resizar fönstret
+        this.y = innerHeight * 0.73
+
         // Förflyttning av raketen
         if(this.movement[0] === true) {
             this.x -= this.vel
@@ -185,12 +191,15 @@ class Rocket {
         }
         // Kollision med asteroiderna
         for(let i = 0; i < asteroids.length; i++) {
-            if (asteroids[i].x + asteroids[i].r > this.x &&
-                asteroids[i].x - asteroids[i].r < this.x &&
+            if (asteroids[i].x + asteroids[i].r > this.x + this.width / 2 &&
+                asteroids[i].x - asteroids[i].r < this.x + this.width / 2 &&
                 asteroids[i].y + asteroids[i].r > this.y &&
-                asteroids[i].y - asteroids[i].r < this.y)
+                asteroids[i].y - asteroids[i].r < this.y + this.height / 2)
             {
-                this.health -= 10
+
+                if (this.health > 0) {
+                    this.health -= 10
+                }
                 asteroids[i].explode()
             }
         }
@@ -198,7 +207,7 @@ class Rocket {
         this.fireObjects.push(
             new Particle(
                 this.x + this.width / 2,
-                this.y + this.height,
+                this.y + this.height - 10,
                 (Math.random() * 5) + 2,
                 (Math.random() - 0.5) * 1,
                 (Math.random()) * 5,
@@ -214,6 +223,7 @@ class Asteroid {
     constructor(x, y, radius, vel) {
         this.x = x
         this.y = y
+        this.xMargin = 5
         this.r = radius
         this.vel = vel
         this.color = '#5bcfff'
@@ -239,6 +249,7 @@ class Asteroid {
                     ))
             }
         }
+        this.reset()
         // Loopar igenom alla explosions partiklar och uppdaterar + kollar om alla är färdigt exploderade
         this.finishedExploding = true
         for (let i = 0; i < this.explosionObjects.length; i++) {
@@ -247,19 +258,18 @@ class Asteroid {
                 this.finishedExploding = false;
             }
         }
-        // Om asteroiden är färdig med explosionen så töms listan med objekten och resetar asteroiden
+        // Om asteroiden är färdig med explosionen så töms listan med objekten
         if (this.finishedExploding === true) {
             this.explosionObjects.splice(0, this.explosionObjects.length)
             this.exploded = false
-            this.reset()
         }
         
     }
 
     reset() {
-        this.y = -this.r
-        this.x = randomInt(0, canvas.width - 100)
         this.r = randomInt(25, 50)
+        this.y = -this.r
+        this.x = randomInt(this.r + this.xMargin, canvas.width - this.r - this.xMargin)
         this.vel = randomInt(2, 12)
     }
 
@@ -287,22 +297,23 @@ class Asteroid {
 }
 
 function createRocket() {
-    let x = innerWidth/2
-    let y = innerHeight - 175
-    let width = 25
-    let height = width * 2
+    let width = 60
+    let height = width * 1.3
+    let x = canvas.width / 2 - width / 2
+    let y = innerHeight * 0.73
     let velocity = 10
     let health = 100
-    return new Rocket(x, y, width, height, velocity, health)
+    let rocketImage = rocketPNG
+    return new Rocket(x, y, width, height, velocity, health, rocketImage)
 }
 
 function createAsteroids(count) {
     let asteroidCount = count
     for (let i = 0; i < asteroidCount; i++) {
-        let x = randomInt(0, canvas.width - 100)
-        const y = 10
         let radius = randomInt(25, 50)
-        let velocity = randomInt(2, 12)
+        let x = randomInt(radius, canvas.width - radius)
+        const y = 10
+        let velocity = randomInt(5, 15)
         asteroidArray.push(new Asteroid(x, y, radius, velocity))
     }
 }
@@ -321,38 +332,65 @@ class Text {
     }
 
     draw() {
-        c.shadowBlur = 2
+        c.shadowBlur = 10
         c.shadowColor = this.color
         c.fillStyle = this.color
         c.font = '50px Arial'
         c.fillText(this.txt, this.x, this.y)
     }
 
-    update(newText) {
+    update(newText, x, y) {
+        this.x = x
+        this.y = y
         this.txt = newText
         this.draw()
     }
 }
 
-// Initialiserar spelet genom att skapa de objekt som behövs
-function initialize() {
-    rocket = createRocket()
-    createAsteroids(9)
-    createText(10, 80, 100)
-    animate()
+class Background {
+    constructor(x, y, vel, img) {
+        this.x = x
+        this.y = y
+        this.vel = vel
+        this.img = img
+    }
+    
+
+    update() {
+        c.shadowBlur = 0
+        c.drawImage(this.img, this.x, this.y)
+        this.y += this.vel
+
+        if(this.y >= canvas.height) {
+            this.y = -this.img.height
+        }
+    }
 }
 
+// Initialiserar spelet genom att skapa de objekt som behövs
+function initialize() {
+    background = new Background(0, 0, 0.8, stars1)
+    background1 = new Background(0, -stars2.height, 0.8, stars2)
+    rocket = createRocket()
+    createAsteroids(6)
+    animate()
+}
 
 // Main loopen för spelet
 function animate() {
     requestAnimationFrame(animate)
     c.clearRect(0, 0, innerWidth, innerHeight)
+    background.update()
+    background1.update()
     for (let i = 0; i < asteroidArray.length; i++) {
         asteroidArray[i].update()
     }
     rocket.update(asteroidArray)
 }
 
+let rocketPicture
+let background
+let background1
 let rocket
 let asteroidArray = []
 
