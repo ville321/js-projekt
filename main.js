@@ -104,7 +104,7 @@ class RocketProjectile {
     draw() {
         c.beginPath()
         c.arc(this.x, this.y, this.r, 0, Math.PI * 2, false)
-        c.shadowBlur = 50
+        c.shadowBlur = 4
         c.shadowColor = this.color
         c.fillStyle = this.color
         c.closePath()
