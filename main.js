@@ -5,13 +5,25 @@ c = canvas.getContext('2d')
 const rocketPNG = document.getElementById('rocket')
 const stars1 = document.getElementById('stars1')
 const stars2 = document.getElementById('stars2')
+const lavaworld = document.getElementById('lava')
 
 canvas.height = window.innerHeight
-canvas.width = 700
+if (window.innerWidth < 700) {
+    canvas.width = window.innerWidth
+} else {
+    canvas.width = 700
+}
+
 
 window.addEventListener('resize', function() {
     canvas.height = window.innerHeight
+    if (window.innerWidth < 700) {
+        canvas.width = window.innerWidth
+    } else {
+        canvas.width = 700
+    }
 })
+
 
 document.addEventListener('keydown', function(event) {
     const key = event.key
@@ -54,6 +66,14 @@ let colorArrayRedFire = [
     '#ff9a00',
     '#ffce00',
     '#ffe808'
+]
+
+let colorArrayRedGradient = [
+    '#ba3030',
+    '#c72c2c',
+    '#ce2525',
+    '#d62121',
+    '#df1b1b'
 ]
 
 let colorArrayBlueFire = [
@@ -118,15 +138,15 @@ class RocketProjectile {
         c.fill()
     }
 
-    update(asteroids) {
-        // Kollar om skotten träffar en asteroid
-        for(let i = 0; i < asteroids.length; i++) {
-            if (asteroids[i].x + asteroids[i].r > this.x &&
-                asteroids[i].x - asteroids[i].r < this.x &&
-                asteroids[i].y + asteroids[i].r > this.y &&
-                asteroids[i].y - asteroids[i].r < this.y)
+    update(planets) {
+        // Kollar om skotten träffar en planet
+        for(let i = 0; i < planets.length; i++) {
+            if (planets[i].x + planets[i].r > this.x &&
+                planets[i].x - planets[i].r < this.x &&
+                planets[i].y + planets[i].r > this.y &&
+                planets[i].y - planets[i].r < this.y)
             {
-                asteroids[i].explode()
+                planets[i].explode()
             }
         }
         this.y += this.vel
@@ -159,19 +179,19 @@ class Rocket {
         }
     }
 
-    draw(asteroids) {
+    draw(planets) {
         c.shadowColor = 'red'
         c.drawImage(this.rocketImage, this.x, this.y, this.width, this.height)
         for(let i = 0; i < this.fireObjects.length; i++) {
             this.fireObjects[i].update()
         }
         for(let i = 0; i < this.projectileObjects.length; i++) {
-            this.projectileObjects[i].update(asteroids)
+            this.projectileObjects[i].update(planets)
         }
         this.healthText.update(this.health, innerWidth * 0.02, innerHeight * 0.95)
     }
 
-    update(asteroids) {
+    update(planets) {
         // Uppdaterar y positionen ifall man resizar fönstret
         this.y = innerHeight * 0.73
 
@@ -189,18 +209,18 @@ class Rocket {
         else if (this.x <= 0) {
             this.x = 0
         }
-        // Kollision med asteroiderna
-        for(let i = 0; i < asteroids.length; i++) {
-            if (asteroids[i].x + asteroids[i].r > this.x + this.width / 2 &&
-                asteroids[i].x - asteroids[i].r < this.x + this.width / 2 &&
-                asteroids[i].y + asteroids[i].r > this.y &&
-                asteroids[i].y - asteroids[i].r < this.y + this.height / 2)
+        // Kollision med planeterna
+        for(let i = 0; i < planets.length; i++) {
+            if (planets[i].x + planets[i].r > this.x + this.width / 2 &&
+                planets[i].x - planets[i].r < this.x + this.width / 2 &&
+                planets[i].y + planets[i].r > this.y &&
+                planets[i].y - planets[i].r < this.y + this.height / 2)
             {
 
                 if (this.health > 0) {
                     this.health -= 10
                 }
-                asteroids[i].explode()
+                planets[i].explode()
             }
         }
         // Skapar objekt för eld partiklarna bakom raketen
@@ -214,13 +234,13 @@ class Rocket {
                 colorArrayRedFire[randomInt(0, 4)]
             ))
 
-        this.draw(asteroids)
+        this.draw(planets)
     }
 }
 
-// Skapar objekt för asteroiderna
-class Asteroid {
-    constructor(x, y, radius, vel) {
+// Skapar objekt för planeterna
+class Planet {
+    constructor(x, y, radius, vel, img) {
         this.x = x
         this.y = y
         this.xMargin = 5
@@ -231,6 +251,11 @@ class Asteroid {
         this.exploded = false
         this.finishedExploding = true
         this.explosionObjects = []
+        this.img = img
+        this.frameIndex = 0; // Flytta frameIndex utanför draw()
+        this.totalFrames = 10; // Anpassa totala antalet frames här
+        this.spriteWidth = 100;
+        this.spriteHeight = 100;
     }
 
 
@@ -258,7 +283,7 @@ class Asteroid {
                 this.finishedExploding = false;
             }
         }
-        // Om asteroiden är färdig med explosionen så töms listan med objekten
+        // Om planeten är färdig med explosionen så töms listan med objekten
         if (this.finishedExploding === true) {
             this.explosionObjects.splice(0, this.explosionObjects.length)
             this.exploded = false
@@ -274,13 +299,13 @@ class Asteroid {
     }
 
     draw() {
-        c.beginPath()
-        c.arc(this.x, this.y, this.r, 0, Math.PI * 2, false)
-        c.fillStyle = this.color
-        c.shadowBlur = 10
-        c.shadowColor = this.shadowColor
-        c.closePath()
-        c.fill()
+        c.drawImage(
+            this.img, 
+            this.spriteWidth * this.frameIndex, 0, this.spriteWidth, this.spriteHeight, 
+            this.x, this.y, 100, 100
+        )
+
+        this.frameIndex = (this.frameIndex + 1) % this.totalFrames; // Uppdatera frameIndex
     }
 
     update() {
@@ -307,14 +332,14 @@ function createRocket() {
     return new Rocket(x, y, width, height, velocity, health, rocketImage)
 }
 
-function createAsteroids(count) {
-    let asteroidCount = count
-    for (let i = 0; i < asteroidCount; i++) {
+function createPlanets(count, img) {
+    let planetCount = count
+    for (let i = 0; i < planetCount; i++) {
         let radius = randomInt(25, 50)
         let x = randomInt(radius, canvas.width - radius)
         const y = 10
         let velocity = randomInt(5, 15)
-        asteroidArray.push(new Asteroid(x, y, radius, velocity))
+        planetArray.push(new Planet(x, y, radius, velocity, img))
     }
 }
 
@@ -339,10 +364,11 @@ class Text {
         c.fillText(this.txt, this.x, this.y)
     }
 
-    update(newText, x, y) {
+    update(newText, x, y, color) {
         this.x = x
         this.y = y
         this.txt = newText
+        this.color = color
         this.draw()
     }
 }
@@ -355,16 +381,50 @@ class Background {
         this.img = img
     }
     
-
-    update() {
+    draw() {
         c.shadowBlur = 0
         c.drawImage(this.img, this.x, this.y)
-        this.y += this.vel
+    }
 
+    update() {
+        this.y += this.vel
         if(this.y >= canvas.height) {
             this.y = -this.img.height
         }
+        this.draw()
     }
+}
+
+class Scoreboard {
+    constructor(x, y, color) {
+        this.x = x
+        this.y = y
+        this.color = color
+        this.multiplier = 10
+        this.score = 0
+        this.text = createText(this.score, this.x, this.y, this.color)
+    }
+
+    draw() {
+        this.text.update(this.score, this.x, this.y, this.color)
+    }
+
+    update() {
+        this.score += 1 * this.multiplier
+        if (this.score < 1000) {
+            this.color = colorArrayRedGradient[0]
+        } else if (this.score >= 1000 && this.score < 2000) {
+            this.color = colorArrayRedGradient[1]
+        } else if (this.score >= 2000 && this.score < 3000) {
+            this.color = colorArrayRedGradient[2]
+        } else if (this.score >= 3000 && this.score < 4000) {
+            this.color = colorArrayRedGradient[3]
+        } else if (this.score >= 4000 && this.score < 5000) {
+            this.color = colorArrayRedGradient[4]
+        } 
+        this.draw()
+    }
+
 }
 
 // Initialiserar spelet genom att skapa de objekt som behövs
@@ -372,7 +432,8 @@ function initialize() {
     background = new Background(0, 0, 0.8, stars1)
     background1 = new Background(0, -stars2.height, 0.8, stars2)
     rocket = createRocket()
-    createAsteroids(6)
+    createPlanets(6, lavaworld)
+    scoreboard = new Scoreboard(innerWidth * 0.02, innerHeight * 0.075, "red")
     animate()
 }
 
@@ -382,16 +443,18 @@ function animate() {
     c.clearRect(0, 0, innerWidth, innerHeight)
     background.update()
     background1.update()
-    for (let i = 0; i < asteroidArray.length; i++) {
-        asteroidArray[i].update()
+    for (let i = 0; i < planetArray.length; i++) {
+        planetArray[i].update()
     }
-    rocket.update(asteroidArray)
+    rocket.update(planetArray)
+    scoreboard.update()
 }
 
+let scoreboard
 let rocketPicture
 let background
 let background1
 let rocket
-let asteroidArray = []
+let planetArray = []
 
 initialize()
