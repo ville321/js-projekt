@@ -16,12 +16,6 @@ if (window.innerWidth < 700) {
     canvas.width = 700
 }
 
-if (window.innerWidth < 700) {
-    canvas.width = window.innerWidth
-} else {
-    canvas.width = 700
-}
-
 
 window.addEventListener('resize', function() {
     canvas.height = window.innerHeight
@@ -30,23 +24,15 @@ window.addEventListener('resize', function() {
     } else {
         canvas.width = 700
     }
-    if (window.innerWidth < 700) {
-        canvas.width = window.innerWidth
-    } else {
-        canvas.width = 700
-    }
 })
-
 
 
 document.addEventListener('keydown', function(event) {
     const key = event.key
     if(key.toLowerCase() === 'a' || key === 'ArrowLeft') {
-    if(key.toLowerCase() === 'a' || key === 'ArrowLeft') {
         rocket.movement[0] = true
     }
     
-    if(key.toLowerCase() === 'd' || key === 'ArrowRight') {
     if(key.toLowerCase() === 'd' || key === 'ArrowRight') {
         rocket.movement[1] = true
     }
@@ -58,20 +44,14 @@ document.addEventListener('keydown', function(event) {
     if(key === 'k') {
         rocket.health = 100
     }
-
-    if(key === 'k') {
-        rocket.health = 100
-    }
 })
 
 document.addEventListener('keyup', function(event) {
     const key = event.key
     if(key.toLowerCase() === 'a' || key === 'ArrowLeft') {
-    if(key.toLowerCase() === 'a' || key === 'ArrowLeft') {
         rocket.movement[0] = false
     } 
     
-    if(key.toLowerCase() === 'd' || key === 'ArrowRight') {
     if(key.toLowerCase() === 'd' || key === 'ArrowRight') {
         rocket.movement[1] = false
     }
@@ -88,14 +68,6 @@ let colorArrayRedFire = [
     '#ff9a00',
     '#ffce00',
     '#ffe808'
-]
-
-let colorArrayRedGradient = [
-    '#ba3030',
-    '#c72c2c',
-    '#ce2525',
-    '#d62121',
-    '#df1b1b'
 ]
 
 let colorArrayRedGradient = [
@@ -179,7 +151,6 @@ class RocketProjectile {
             planets[i].y + planets[i].spriteHeight > this.y)
             {
                 planets[i].explode()
-                planets[i].explode()
             }
         }
         this.y += this.vel
@@ -189,7 +160,6 @@ class RocketProjectile {
 
 // Skapar ett objekt för raketen
 class Rocket {
-    constructor(x, y, width, height, vel, health, rocketImage) {
     constructor(x, y, width, height, vel, health, rocketImage) {
         this.x = x
         this.y = y
@@ -222,15 +192,10 @@ class Rocket {
         }
         for(let i = 0; i < this.projectileObjects.length; i++) {
             this.projectileObjects[i].update(planets)
-            this.projectileObjects[i].update(planets)
         }
         this.healthText.update(this.health, innerWidth * 0.02, innerHeight * 0.95)
         resetShadow()
     }
-
-    update(planets) {
-        // Uppdaterar y positionen ifall man resizar fönstret
-        this.y = innerHeight * 0.73
 
     update(planets) {
         // Uppdaterar y positionen ifall man resizar fönstret
@@ -267,7 +232,6 @@ class Rocket {
         this.fireObjects.push(
             new Particle(
                 this.x + this.width / 2,
-                this.y + this.height - 10,
                 this.y + this.height - 10,
                 (Math.random() * 5) + 2,
                 (Math.random() - 0.5) * 1,
@@ -319,7 +283,6 @@ class Planet {
             }
         }
         this.reset()
-        this.reset()
         // Loopar igenom alla explosions partiklar och uppdaterar + kollar om alla är färdigt exploderade
         this.finishedExploding = true
         for (let i = 0; i < this.explosionObjects.length; i++) {
@@ -328,7 +291,6 @@ class Planet {
                 this.finishedExploding = false
             }
         }
-        // Om planeten är färdig med explosionen så töms listan med objekten
         // Om planeten är färdig med explosionen så töms listan med objekten
         if (this.finishedExploding === true) {
             this.explosionObjects.splice(0, this.explosionObjects.length)
@@ -379,14 +341,8 @@ function createRocket() {
     let height = width * 1.3
     let x = canvas.width / 2 - width / 2
     let y = innerHeight * 0.73
-    let width = 60
-    let height = width * 1.3
-    let x = canvas.width / 2 - width / 2
-    let y = innerHeight * 0.73
     let velocity = 10
     let health = 100
-    let rocketImage = rocketPNG
-    return new Rocket(x, y, width, height, velocity, health, rocketImage)
     let rocketImage = rocketPNG
     return new Rocket(x, y, width, height, velocity, health, rocketImage)
 }
@@ -429,29 +385,6 @@ class Text {
         this.x = x
         this.y = y
         this.txt = newText
-        this.color = color
-        this.draw()
-    }
-}
-
-class Background {
-    constructor(x, y, vel, img) {
-        this.x = x
-        this.y = y
-        this.vel = vel
-        this.img = img
-    }
-    
-    draw() {
-        c.shadowBlur = 0
-        c.drawImage(this.img, this.x, this.y)
-    }
-
-    update() {
-        this.y += this.vel
-        if(this.y >= canvas.height) {
-            this.y = -this.img.height
-        }
         this.draw()
     }
 }
@@ -535,7 +468,6 @@ let rocketPicture
 let background1
 let background2
 let rocket
-let planetArray = []
 let planetArray = []
 
 initialize()
