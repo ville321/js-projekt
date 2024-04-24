@@ -2,36 +2,57 @@ canvas = document.querySelector('canvas')
 
 c = canvas.getContext('2d')
 
+const rocketPNG = document.getElementById('rocket')
+const stars1 = document.getElementById('stars1')
+const stars2 = document.getElementById('stars2')
+
+const planetSpriteArray = [document.getElementById('lava')]
+
+
 canvas.height = window.innerHeight
-canvas.width = window.innerWidth
+if (window.innerWidth < 700) {
+    canvas.width = window.innerWidth
+} else {
+    canvas.width = 700
+}
+
 
 window.addEventListener('resize', function() {
     canvas.height = window.innerHeight
-    canvas.width = window.innerWidth
+    if (window.innerWidth < 700) {
+        canvas.width = window.innerWidth
+    } else {
+        canvas.width = 700
+    }
 })
+
 
 document.addEventListener('keydown', function(event) {
     const key = event.key
-    if(key === 'a' || key === 'ArrowLeft') {
+    if(key.toLowerCase() === 'a' || key === 'ArrowLeft') {
         rocket.movement[0] = true
     }
     
-    if(key === 'd' || key === 'ArrowRight') {
+    if(key.toLowerCase() === 'd' || key === 'ArrowRight') {
         rocket.movement[1] = true
     }
 
     if(key === ' ') {
         rocket.shoot()
     }
+
+    if(key === 'k') {
+        rocket.health = 100
+    }
 })
 
 document.addEventListener('keyup', function(event) {
     const key = event.key
-    if(key === 'a' || key === 'ArrowLeft') {
+    if(key.toLowerCase() === 'a' || key === 'ArrowLeft') {
         rocket.movement[0] = false
     } 
     
-    if(key === 'd' || key === 'ArrowRight') {
+    if(key.toLowerCase() === 'd' || key === 'ArrowRight') {
         rocket.movement[1] = false
     }
 })
@@ -47,6 +68,14 @@ let colorArrayRedFire = [
     '#ff9a00',
     '#ffce00',
     '#ffe808'
+]
+
+let colorArrayRedGradient = [
+    '#ba3030',
+    '#c72c2c',
+    '#ce2525',
+    '#d62121',
+    '#df1b1b'
 ]
 
 let colorArrayBlueFire = [
@@ -72,11 +101,12 @@ class Particle {
     draw() {
         c.beginPath()
         c.arc(this.x, this.y, this.r, 0, Math.PI * 2, false)
-        c.shadowBlur = 15
+        c.shadowBlur = 10
         c.shadowColor = this.color
         c.fillStyle = this.color
         c.closePath()
         c.fill()
+        resetShadow()
     }
 
     update() {
@@ -104,22 +134,23 @@ class RocketProjectile {
     draw() {
         c.beginPath()
         c.arc(this.x, this.y, this.r, 0, Math.PI * 2, false)
-        c.shadowBlur = 4
+        c.shadowBlur = 3
         c.shadowColor = this.color
         c.fillStyle = this.color
         c.closePath()
         c.fill()
+        resetShadow()
     }
 
-    update(asteroids) {
-        // Kollar om skotten träffar en asteroid
-        for(let i = 0; i < asteroids.length; i++) {
-            if (asteroids[i].x + asteroids[i].r > this.x &&
-                asteroids[i].x - asteroids[i].r < this.x &&
-                asteroids[i].y + asteroids[i].r > this.y &&
-                asteroids[i].y - asteroids[i].r < this.y)
+    update(planets) {
+        // Kollar om skotten träffar en planet
+        for(let i = 0; i < planets.length; i++) {
+            if (planets[i].x < this.x &&
+            planets[i].x + planets[i].spriteWidth > this.x &&
+            planets[i].y < this.y &&
+            planets[i].y + planets[i].spriteHeight > this.y)
             {
-                asteroids[i].explode()
+                planets[i].explode()
             }
         }
         this.y += this.vel
@@ -129,7 +160,7 @@ class RocketProjectile {
 
 // Skapar ett objekt för raketen
 class Rocket {
-    constructor(x, y, width, height, vel, health) {
+    constructor(x, y, width, height, vel, health, rocketImage) {
         this.x = x
         this.y = y
         this.width = width
@@ -141,7 +172,8 @@ class Rocket {
         this.movement = [false, false]
         this.projectileObjects = []
         this.fireObjects = []
-        this.ammoCount = 10000
+        this.ammoCount = 1000
+        this.rocketImage = rocketImage
     }
 
     shoot() {
@@ -151,24 +183,24 @@ class Rocket {
         }
     }
 
-    draw(asteroids) {
-        c.beginPath()
-        c.roundRect(this.x, this.y, this.width, this.height, 30)
-        c.fillStyle = this.color
-        c.shadowBlur = 1
-        c.shadowColor = this.color
-        c.closePath()
-        c.fill()
+    draw(planets) {
+        c.shadowBlur = 15
+        c.shadowColor = 'red'
+        c.drawImage(this.rocketImage, this.x, this.y, this.width, this.height)
         for(let i = 0; i < this.fireObjects.length; i++) {
             this.fireObjects[i].update()
         }
         for(let i = 0; i < this.projectileObjects.length; i++) {
-            this.projectileObjects[i].update(asteroids)
+            this.projectileObjects[i].update(planets)
         }
-        this.healthText.update(this.health)
+        this.healthText.update(this.health, innerWidth * 0.02, innerHeight * 0.95)
+        resetShadow()
     }
 
-    update(asteroids) {
+    update(planets) {
+        // Uppdaterar y positionen ifall man resizar fönstret
+        this.y = innerHeight * 0.73
+
         // Förflyttning av raketen
         if(this.movement[0] === true) {
             this.x -= this.vel
@@ -183,100 +215,118 @@ class Rocket {
         else if (this.x <= 0) {
             this.x = 0
         }
-        // Kollision med asteroiderna
-        for(let i = 0; i < asteroids.length; i++) {
-            if (asteroids[i].x + asteroids[i].r > this.x &&
-                asteroids[i].x - asteroids[i].r < this.x &&
-                asteroids[i].y + asteroids[i].r > this.y &&
-                asteroids[i].y - asteroids[i].r < this.y)
+        // Kollision med planeterna
+        for(let i = 0; i < planets.length; i++) {
+            if (planets[i].x < this.x &&
+                planets[i].x + planets[i].spriteWidth > this.x + this.width &&
+                planets[i].y < this.y &&
+                planets[i].y + planets[i].spriteHeight > this.y) 
             {
-                this.health -= 10
-                asteroids[i].explode()
+                if (this.health > 0) {
+                    this.health -= 10
+                }
+                planets[i].explode()
             }
         }
         // Skapar objekt för eld partiklarna bakom raketen
         this.fireObjects.push(
             new Particle(
                 this.x + this.width / 2,
-                this.y + this.height,
+                this.y + this.height - 10,
                 (Math.random() * 5) + 2,
                 (Math.random() - 0.5) * 1,
                 (Math.random()) * 5,
                 colorArrayRedFire[randomInt(0, 4)]
-            ))
+        ))
 
-        this.draw(asteroids)
+        
+        this.draw(planets)
     }
 }
 
-// Skapar objekt för asteroiderna
-class Asteroid {
-    constructor(x, y, radius, vel) {
+// Skapar objekt för planeterna
+class Planet {
+    constructor(x, y, vel, img) {
         this.x = x
         this.y = y
-        this.r = radius
+        this.xMargin = 5
         this.vel = vel
         this.color = '#5bcfff'
-        this.shadowColor = '#5ad6ff'
+        this.shadowColor = 'orange'
         this.exploded = false
         this.finishedExploding = true
         this.explosionObjects = []
+        this.img = img
+        this.frameIndex = 0 // Flytta frameIndex utanför draw()
+        this.totalFrames = 10 // Anpassa totala antalet frames här
+        this.spriteWidth = 100
+        this.spriteHeight = 100
+        this.spriteVel = randomInt(15, 25)
+        this.runCounter = 0
     }
 
 
     explode() {
         this.exploded = true
+        // Skapar explosions partiklar
         if (this.explosionObjects.length === 0) {
-            for (let i = 0; i < randomInt(25, 30); i++) {
+            for (let i = 0; i < randomInt(40, 45); i++) {
                 this.explosionObjects.push(
                     new Particle(
-                        randomInt(this.x-this.r, this.x+this.r),
-                        randomInt(this.y-this.r, this.y+this.r),
+                        randomInt(this.x, this.x + this.spriteWidth),
+                        randomInt(this.y, this.y + this.spriteHeight),
                         randomInt(4, 7),
                         randomInt(-5, 5),
                         randomInt(-5, 5),
-                        colorArrayBlueFire[randomInt(0, 4)]
+                        colorArrayRedFire[randomInt(0, 4)]
                     ))
             }
         }
+        this.reset()
         // Loopar igenom alla explosions partiklar och uppdaterar + kollar om alla är färdigt exploderade
         this.finishedExploding = true
         for (let i = 0; i < this.explosionObjects.length; i++) {
             this.explosionObjects[i].update()
             if (this.explosionObjects[i].r > 0.5) {
-                this.finishedExploding = false;
+                this.finishedExploding = false
             }
         }
-        // Om asteroiden är färdig med explosionen så töms listan med objekten och resetar asteroiden
+        // Om planeten är färdig med explosionen så töms listan med objekten
         if (this.finishedExploding === true) {
             this.explosionObjects.splice(0, this.explosionObjects.length)
             this.exploded = false
-            this.reset()
         }
         
     }
 
     reset() {
-        this.y = -this.r
-        this.x = randomInt(0, canvas.width - 100)
-        this.r = randomInt(25, 50)
-        this.vel = randomInt(2, 12)
+        this.y = -this.spriteHeight
+        this.x = randomInt(this.xMargin, canvas.width - this.spriteWidth - this.xMargin)
+        this.vel = randomInt(2, 8)
     }
 
     draw() {
-        c.beginPath()
-        c.arc(this.x, this.y, this.r, 0, Math.PI * 2, false)
-        c.fillStyle = this.color
         c.shadowBlur = 10
         c.shadowColor = this.shadowColor
-        c.closePath()
-        c.fill()
+        c.drawImage(
+            this.img, 
+            this.spriteWidth * this.frameIndex,
+            0,
+            this.spriteWidth, this.spriteHeight, 
+            this.x, this.y, 100, 100
+        )
+        resetShadow()
+        if (this.runCounter === this.spriteVel) {
+            this.frameIndex = (this.frameIndex + 1) % this.totalFrames; // Uppdatera frameIndex
+            this.runCounter = 0
+        }
+        this.runCounter++
     }
 
     update() {
         if (this.exploded === false) {
             this.y += this.vel
-            if(this.y >= canvas.height + this.r) {
+            if(this.y > canvas.height) {
                 this.reset()
             }
             this.draw()
@@ -287,23 +337,24 @@ class Asteroid {
 }
 
 function createRocket() {
-    let x = innerWidth/2
-    let y = innerHeight - 175
-    let width = 25
-    let height = width * 2
+    let width = 60
+    let height = width * 1.3
+    let x = canvas.width / 2 - width / 2
+    let y = innerHeight * 0.73
     let velocity = 10
     let health = 100
-    return new Rocket(x, y, width, height, velocity, health)
+    let rocketImage = rocketPNG
+    return new Rocket(x, y, width, height, velocity, health, rocketImage)
 }
 
-function createAsteroids(count) {
-    let asteroidCount = count
-    for (let i = 0; i < asteroidCount; i++) {
-        let x = randomInt(0, canvas.width - 100)
+function createPlanets(count, spriteArray) {
+    for (let i = 0; i < count; i++) {
+        let spriteWidth = 100
+        let sprite = spriteArray[0]
+        let x = randomInt(0, canvas.width - spriteWidth)
         const y = 10
-        let radius = randomInt(25, 50)
-        let velocity = randomInt(2, 12)
-        asteroidArray.push(new Asteroid(x, y, radius, velocity))
+        let velocity = randomInt(2, 8)
+        planetArray.push(new Planet(x, y, velocity, sprite))
     }
 }
 
@@ -317,43 +368,106 @@ class Text {
         this.x = x
         this.y = y
         this.txt = text
-        this.color = color
+        //this.color = color
+        this.color = 'red'
     }
 
     draw() {
-        c.shadowBlur = 2
+        c.shadowBlur = 8
         c.shadowColor = this.color
         c.fillStyle = this.color
         c.font = '50px Arial'
         c.fillText(this.txt, this.x, this.y)
+        resetShadow()
     }
 
-    update(newText) {
+    update(newText, x, y) {
+        this.x = x
+        this.y = y
         this.txt = newText
         this.draw()
     }
 }
 
+class Background {
+    constructor(x, y, vel, img) {
+        this.x = x
+        this.y = y
+        this.vel = vel
+        this.img = img
+    }
+    
+    draw() {
+        c.drawImage(this.img, this.x, this.y)
+    }
+
+    update() {
+        this.y += this.vel
+        if(this.y >= canvas.height) {
+            this.y = -this.img.height
+        }
+        this.draw()
+    }
+}
+
+class Scoreboard {
+    constructor(x, y, color) {
+        this.x = x
+        this.y = y
+        this.color = color
+        this.multiplier = 10
+        this.score = 0
+        this.scoreboard = createText(this.score, this.x, this.y, this.color)
+    }
+
+    draw() {
+        this.scoreboard.update(this.score, this.x, this.y, this.color)
+    }
+
+    update() {
+        this.score += 1 * this.multiplier
+        this.draw()
+    }
+
+}
+
+function initializeBackgrounds() {
+    background1 = new Background(0, 0, 0.8, stars1);
+    background2 = new Background(0, -stars2.height, 0.8, stars2);
+}
+
 // Initialiserar spelet genom att skapa de objekt som behövs
 function initialize() {
+    initializeBackgrounds()
     rocket = createRocket()
-    createAsteroids(9)
-    createText(10, 80, 100)
+    createPlanets(10, planetSpriteArray)
+    scoreboard = new Scoreboard(innerWidth * 0.02, innerHeight * 0.075, "red")
     animate()
 }
 
+function resetShadow() {
+    c.shadowBlur = 0
+    c.shadowColor = null
+}
 
 // Main loopen för spelet
 function animate() {
     requestAnimationFrame(animate)
     c.clearRect(0, 0, innerWidth, innerHeight)
-    for (let i = 0; i < asteroidArray.length; i++) {
-        asteroidArray[i].update()
+    background1.update()
+    background2.update()
+    for (let i = 0; i < planetArray.length; i++) {
+        planetArray[i].update()
     }
-    rocket.update(asteroidArray)
+    rocket.update(planetArray)
+    scoreboard.update()
 }
 
+let scoreboard
+let rocketPicture
+let background1
+let background2
 let rocket
-let asteroidArray = []
+let planetArray = []
 
 initialize()

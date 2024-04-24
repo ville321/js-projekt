@@ -10,13 +10,29 @@
                 display: block;
                 background: #282828;
             }
-            canvas {
-                display: block;
+            .container {
+                margin: 0;
+                display: flex;
+                justify-content: center;
+            }
+            .canvas {
+                border: 5px solid black;
+            }
+
+            img {
+                display: none;
             }
         </style>
     </head>
     <body>
-        <canvas></canvas>
+        <div class="container">
+            <canvas></canvas>
+        </div>
+        <img id="rocket" src="images/rocket.png" alt="rocket">
+        <img id="stars1" src="images/stars1.png" alt="background with stars">
+        <img id="stars2" src="images/stars2.png" alt="background with stars">
+        <img id="lava" src="images/lava.png" alt="lava planet spritesheet">
+
         <script src="main.js"></script>
     </body>
 </html>
