@@ -6,8 +6,11 @@ const rocketPNG = document.getElementById('rocket')
 const stars1 = document.getElementById('stars1')
 const stars2 = document.getElementById('stars2')
 
-const planetSpriteArray = [document.getElementById('lava')]
-
+const planetClassArray = document.getElementsByClassName('planet')
+const planetSpriteArray = []
+for (let i = 0; i < planetClassArray.length; i++) {
+    planetSpriteArray.push([planetClassArray[i]])
+}
 
 canvas.height = window.innerHeight
 if (window.innerWidth < 700) {
@@ -101,7 +104,7 @@ class Particle {
     draw() {
         c.beginPath()
         c.arc(this.x, this.y, this.r, 0, Math.PI * 2, false)
-        c.shadowBlur = 10
+        c.shadowBlur = 0
         c.shadowColor = this.color
         c.fillStyle = this.color
         c.closePath()
@@ -193,7 +196,7 @@ class Rocket {
         for(let i = 0; i < this.projectileObjects.length; i++) {
             this.projectileObjects[i].update(planets)
         }
-        this.healthText.update(this.health, innerWidth * 0.02, innerHeight * 0.95)
+        this.healthText.update(this.health + "%", innerWidth * 0.02, innerHeight * 0.95)
         resetShadow()
     }
 
@@ -350,7 +353,7 @@ function createRocket() {
 function createPlanets(count, spriteArray) {
     for (let i = 0; i < count; i++) {
         let spriteWidth = 100
-        let sprite = spriteArray[0]
+        let sprite = spriteArray[randomInt(0, spriteArray.length - 1)][0]
         let x = randomInt(0, canvas.width - spriteWidth)
         const y = 10
         let velocity = randomInt(2, 8)
