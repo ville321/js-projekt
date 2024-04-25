@@ -326,10 +326,15 @@ class Planet {
         this.runCounter++
     }
 
-    update() {
+    update(rocket) {
         if (this.exploded === false) {
             this.y += this.vel
-            if(this.y > canvas.height) {
+            if(this.y + this.spriteHeight / 2 > canvas.height) {
+                
+                if(rocket.health > 0){
+                rocket.health -= 10
+                }
+                this.explode()
                 this.reset()
             }
             this.draw()
@@ -344,7 +349,7 @@ function createRocket() {
     let height = width * 1.3
     let x = canvas.width / 2 - width / 2
     let y = innerHeight * 0.73
-    let velocity = 10
+    let velocity = 12.5
     let health = 100
     let rocketImage = rocketPNG
     return new Rocket(x, y, width, height, velocity, health, rocketImage)
@@ -356,7 +361,7 @@ function createPlanets(count, spriteArray) {
         let sprite = spriteArray[randomInt(0, spriteArray.length - 1)][0]
         let x = randomInt(0, canvas.width - spriteWidth)
         const y = 10
-        let velocity = randomInt(2, 8)
+        let velocity = randomInt(2, 4)
         planetArray.push(new Planet(x, y, velocity, sprite))
     }
 }
@@ -391,7 +396,6 @@ class Text {
         this.draw()
     }
 }
-
 class Background {
     constructor(x, y, vel, img) {
         this.x = x
@@ -420,7 +424,12 @@ class Scoreboard {
         this.color = color
         this.multiplier = 10
         this.score = 0
+        this.currentwave = 0
         this.scoreboard = createText(this.score, this.x, this.y, this.color)
+    }
+
+    wave() {
+        createPlanets(1, planetSpriteArray)
     }
 
     draw() {
@@ -429,6 +438,10 @@ class Scoreboard {
 
     update() {
         this.score += 1 * this.multiplier
+        if (this.score - this.currentwave > 5000) {
+            this.wave()
+            this.currentwave = this.score
+        }
         this.draw()
     }
 
@@ -443,9 +456,8 @@ function initializeBackgrounds() {
 function initialize() {
     initializeBackgrounds()
     rocket = createRocket()
-    createPlanets(10, planetSpriteArray)
+    createPlanets(5, planetSpriteArray)
     scoreboard = new Scoreboard(innerWidth * 0.02, innerHeight * 0.075, "red")
-    animate()
 }
 
 function resetShadow() {
@@ -453,19 +465,38 @@ function resetShadow() {
     c.shadowColor = null
 }
 
+class Gamestate {
+    constructor(gamestate) {
+        this.gamestate = gamestate
+    }
+
+    runGame() {
+        if (planetArray.length === 0) {
+            initialize()
+        }
+        background1.update()
+        background2.update()
+        for (let i = 0; i < planetArray.length; i++) {
+            planetArray[i].update(rocket)
+        }
+        rocket.update(planetArray)
+        scoreboard.update()
+    }
+    gamestateHandler() {
+        switch (this.gamestate) {
+            case 0:
+                this.runGame()
+        }
+    }
+}
 // Main loopen för spelet
 function animate() {
     requestAnimationFrame(animate)
     c.clearRect(0, 0, innerWidth, innerHeight)
-    background1.update()
-    background2.update()
-    for (let i = 0; i < planetArray.length; i++) {
-        planetArray[i].update()
-    }
-    rocket.update(planetArray)
-    scoreboard.update()
+    gamestateObject.gamestateHandler()
 }
 
+let gamestateObject = new Gamestate(0)
 let scoreboard
 let rocketPicture
 let background1
@@ -473,4 +504,4 @@ let background2
 let rocket
 let planetArray = []
 
-initialize()
+animate()
