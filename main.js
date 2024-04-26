@@ -132,6 +132,8 @@ class RocketProjectile {
         this.r = r
         this.vel = vel
         this.color = 'white'
+        this.collided = 0
+        this.maxCollisions = 1
     }
 
     draw() {
@@ -154,6 +156,7 @@ class RocketProjectile {
             planets[i].y + planets[i].spriteHeight > this.y)
             {
                 planets[i].explode()
+                this.collided += 1
             }
         }
         this.y += this.vel
@@ -195,6 +198,10 @@ class Rocket {
         }
         for(let i = 0; i < this.projectileObjects.length; i++) {
             this.projectileObjects[i].update(planets)
+
+            if (this.projectileObjects[i].collided == this.projectileObjects[i].maxCollisions) {
+                this.projectileObjects.splice(i, 1)
+            }
         }
         this.healthText.update(this.health + "%", innerWidth * 0.02, innerHeight * 0.95)
         resetShadow()
