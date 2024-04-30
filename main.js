@@ -6,6 +6,8 @@ const rocketPNG = document.getElementById('rocket')
 const stars1 = document.getElementById('stars1')
 const stars2 = document.getElementById('stars2')
 
+const RocketProjectilePNG = document.getElementById('projectile')
+
 const planetClassArray = document.getElementsByClassName('planet')
 const planetSpriteArray = []
 for (let i = 0; i < planetClassArray.length; i++) {
@@ -129,21 +131,17 @@ class RocketProjectile {
     constructor(x, y, r, vel) {
         this.x = x
         this.y = y
-        this.r = r
         this.vel = vel
-        this.color = 'white'
         this.collided = 0
         this.maxCollisions = 1
+        this.projectilePNG = RocketProjectilePNG
+        this.projectileDimensions = [10, 50]
     }
 
     draw() {
-        c.beginPath()
-        c.arc(this.x, this.y, this.r, 0, Math.PI * 2, false)
-        c.shadowBlur = 3
-        c.shadowColor = this.color
-        c.fillStyle = this.color
-        c.closePath()
-        c.fill()
+        c.shadowBlur = 1
+        c.shadowColor = 'blue'
+        c.drawImage(this.projectilePNG, this.x - 5, this.y, this.projectileDimensions[0], this.projectileDimensions[1])
         resetShadow()
     }
 
@@ -157,6 +155,10 @@ class RocketProjectile {
             {
                 planets[i].explode()
                 this.collided += 1
+                let powerUpRoll = randomInt(1, 100)
+                if (powerUpRoll < 10) {
+                    rocket.powerUpObjects.push(new PowerUp('ammo', this.x, this.y))
+                }
             }
         }
         this.y += this.vel
@@ -164,7 +166,36 @@ class RocketProjectile {
     }
 }
 
-// Skapar ett objekt för raketen
+class PowerUp {
+    constructor(powerUp, x, y) {
+        this.powerUp = powerUp
+        this.vel = 2
+        this.width = 10
+        this.height = 10
+        this.x = x
+        this.y = y
+    }
+
+    draw() {
+        c.beginPath()
+        c.arc(this.x, this.y, this.width, 0, Math.PI * 2, false)
+        c.shadowBlur = 3
+        c.shadowColor = 'red'
+        c.fillStyle = 'red'
+        c.closePath()
+        c.fill()
+        resetShadow()
+    }
+
+    update() {
+        if (this.y > 0) {
+            this.y += this.vel
+            this.draw()
+        }
+    }
+}
+
+// Skapar objekt för raketen
 class Rocket {
     constructor(x, y, width, height, vel, health, rocketImage) {
         this.x = x
@@ -178,6 +209,7 @@ class Rocket {
         this.movement = [false, false]
         this.projectileObjects = []
         this.fireObjects = []
+        this.powerUpObjects = []
         this.ammoCount = 1000
         this.rocketImage = rocketImage
     }
@@ -190,12 +222,6 @@ class Rocket {
     }
 
     draw(planets) {
-        c.shadowBlur = 15
-        c.shadowColor = 'red'
-        c.drawImage(this.rocketImage, this.x, this.y, this.width, this.height)
-        for(let i = 0; i < this.fireObjects.length; i++) {
-            this.fireObjects[i].update()
-        }
         for(let i = 0; i < this.projectileObjects.length; i++) {
             this.projectileObjects[i].update(planets)
 
@@ -203,7 +229,16 @@ class Rocket {
                 this.projectileObjects.splice(i, 1)
             }
         }
+        c.shadowBlur = 15
+        c.shadowColor = 'red'
+        c.drawImage(this.rocketImage, this.x, this.y, this.width, this.height)
+        for(let i = 0; i < this.fireObjects.length; i++) {
+            this.fireObjects[i].update()
+        }
         this.healthText.update(this.health + "%", innerWidth * 0.02, innerHeight * 0.95)
+        for(let i = 0; i < this.powerUpObjects.length; i++) {
+            this.powerUpObjects[i].update()
+        }
         resetShadow()
     }
 
@@ -238,6 +273,12 @@ class Rocket {
                 planets[i].explode()
             }
         }
+
+        // if (this.score <= 0) {
+        //     scoreboard.saveScore()
+        // }
+
+        
         // Skapar objekt för eld partiklarna bakom raketen
         this.fireObjects.push(
             new Particle(
@@ -433,6 +474,8 @@ class Scoreboard {
         this.score = 0
         this.currentwave = 0
         this.scoreboard = createText(this.score, this.x, this.y, this.color)
+        // this.leaderboardText = createText(this.leaderboard, 100, 100, "white")
+        // this.leaderboard = []
     }
 
     wave() {
@@ -441,7 +484,12 @@ class Scoreboard {
 
     draw() {
         this.scoreboard.update(this.score, this.x, this.y, this.color)
+        // this.leaderboardText.update("hejsan", 100, 100, "white")
     }
+
+    // saveScore() {
+    //     this.leaderboard.push(this.score)
+    // }
 
     update() {
         this.score += 1 * this.multiplier
