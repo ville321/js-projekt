@@ -2,12 +2,16 @@ canvas = document.querySelector('canvas')
 
 c = canvas.getContext('2d')
 
+// Background + rocket
 const rocketPNG = document.getElementById('rocket')
 const stars1 = document.getElementById('stars1')
 const stars2 = document.getElementById('stars2')
 
-const RocketProjectilePNG = document.getElementById('projectile')
+// Powerups
+const ammoPowerupPNG = document.getElementById('ammoPowerUp')
 
+// Rocket projectile + Planets
+const RocketProjectilePNG = document.getElementById('projectile')
 const planetClassArray = document.getElementsByClassName('planet')
 const planetSpriteArray = []
 for (let i = 0; i < planetClassArray.length; i++) {
@@ -31,7 +35,6 @@ window.addEventListener('resize', function() {
     }
 })
 
-
 document.addEventListener('keydown', function(event) {
     const key = event.key
     if(key.toLowerCase() === 'a' || key === 'ArrowLeft') {
@@ -47,7 +50,14 @@ document.addEventListener('keydown', function(event) {
     }
 
     if(key === 'k') {
-        rocket.health = 100
+        rocket.health = 0
+    }
+    if(key === 'Enter' && gameRunning === false) {
+        resumeGame()
+    }
+
+    if(key == 'Escape' && gameRunning === true) {
+        pauseGame()
     }
 })
 
@@ -155,43 +165,10 @@ class RocketProjectile {
             {
                 planets[i].explode()
                 this.collided += 1
-                let powerUpRoll = randomInt(1, 100)
-                if (powerUpRoll < 10) {
-                    rocket.powerUpObjects.push(new PowerUp('ammo', this.x, this.y))
-                }
             }
         }
         this.y += this.vel
         this.draw()
-    }
-}
-
-class PowerUp {
-    constructor(powerUp, x, y) {
-        this.powerUp = powerUp
-        this.vel = 2
-        this.width = 10
-        this.height = 10
-        this.x = x
-        this.y = y
-    }
-
-    draw() {
-        c.beginPath()
-        c.arc(this.x, this.y, this.width, 0, Math.PI * 2, false)
-        c.shadowBlur = 3
-        c.shadowColor = 'red'
-        c.fillStyle = 'red'
-        c.closePath()
-        c.fill()
-        resetShadow()
-    }
-
-    update() {
-        if (this.y > 0) {
-            this.y += this.vel
-            this.draw()
-        }
     }
 }
 
@@ -206,11 +183,12 @@ class Rocket {
         this.color = '#9171f8'
         this.health = health
         this.healthText = createText(this.health, innerWidth * 0.02, innerHeight * 0.95, 'red')
+        this.ammoText = createText(this.ammoCount, canvas.width * 0.85, canvas.height * 0.95, 'red')
         this.movement = [false, false]
         this.projectileObjects = []
         this.fireObjects = []
         this.powerUpObjects = []
-        this.ammoCount = 1000
+        this.ammoCount = 500
         this.rocketImage = rocketImage
     }
 
@@ -222,6 +200,9 @@ class Rocket {
     }
 
     draw(planets) {
+        for(let i = 0; i < this.powerUpObjects.length; i++) {
+            this.powerUpObjects[i].update()
+        }
         for(let i = 0; i < this.projectileObjects.length; i++) {
             this.projectileObjects[i].update(planets)
 
@@ -235,10 +216,9 @@ class Rocket {
         for(let i = 0; i < this.fireObjects.length; i++) {
             this.fireObjects[i].update()
         }
+        this.ammoText.update(this.ammoCount, canvas.width * 0.85, canvas.height * 0.95)
         this.healthText.update(this.health + "%", innerWidth * 0.02, innerHeight * 0.95)
-        for(let i = 0; i < this.powerUpObjects.length; i++) {
-            this.powerUpObjects[i].update()
-        }
+
         resetShadow()
     }
 
@@ -262,10 +242,10 @@ class Rocket {
         }
         // Kollision med planeterna
         for(let i = 0; i < planets.length; i++) {
-            if (planets[i].x < this.x &&
-                planets[i].x + planets[i].spriteWidth > this.x + this.width &&
-                planets[i].y < this.y &&
-                planets[i].y + planets[i].spriteHeight > this.y) 
+            if (planets[i].x <= this.x &&
+                planets[i].x + planets[i].spriteWidth >= this.x + this.width &&
+                planets[i].y <= this.y &&
+                planets[i].y + planets[i].spriteHeight >= this.y) 
             {
                 if (this.health > 0) {
                     this.health -= 10
@@ -274,10 +254,9 @@ class Rocket {
             }
         }
 
-        // if (this.score <= 0) {
-        //     scoreboard.saveScore()
-        // }
-
+        if (this.health <= 0) {
+            deathMenu()
+        }
         
         // Skapar objekt för eld partiklarna bakom raketen
         this.fireObjects.push(
@@ -424,15 +403,15 @@ class Text {
         this.x = x
         this.y = y
         this.txt = text
-        //this.color = color
-        this.color = 'red'
+        this.color = color
+        //this.color = 'red'
     }
 
     draw() {
         c.shadowBlur = 8
         c.shadowColor = this.color
         c.fillStyle = this.color
-        c.font = '50px Arial'
+        c.font = '50px Space Grotesk'
         c.fillText(this.txt, this.x, this.y)
         resetShadow()
     }
@@ -546,6 +525,8 @@ class Gamestate {
 }
 // Main loopen för spelet
 function animate() {
+    if (!gameRunning) return;
+
     requestAnimationFrame(animate)
     c.clearRect(0, 0, innerWidth, innerHeight)
     gamestateObject.gamestateHandler()
@@ -559,4 +540,28 @@ let background2
 let rocket
 let planetArray = []
 
+let gameRunning = true;
+
+function pauseGame() {
+    let pauseText = createText('PAUSED', canvas.width * 0.36, canvas.height * 0.5, 'red')
+    let continueText = createText('Press "ENTER" to Continue', canvas.width * 0.36, canvas.height * 0.6, 'blue')
+    pauseText.update('PAUSED', canvas.width * 0.36, canvas.height * 0.5)
+    continueText.update('Press "ENTER" to Continue', canvas.width* 0.05, canvas.height * 0.6)
+    gameRunning = false;
+}
+
+function deathMenu() {
+    let deathText = createText('Du dog lol!', canvas.width * 0.5, canvas.height * 0.5, 'red')
+    deathText.update('Du dog lol', canvas.width * 0.3, canvas.height * 0.5)
+    gameRunning = false;
+}
+
+function resumeGame() {
+    gameRunning = true
+    // rocket.health = 100
+    animate();
+}
+
+window.onload = function () {
 animate()
+}
