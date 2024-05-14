@@ -27,8 +27,10 @@ document.addEventListener('keydown', function(event) {
         rocket.shoot()
     } else if(key === 'k') {
         rocket.health = 0
-    } else if(key === 'Enter' && gameRunning === false) {
+    } else if(key === 'Enter' && gameRunning === false  && rocket.health > 0) {
         resumeGame()
+    } else if(key.toLowerCase() == 'r' && gameRunning === false && rocket.health <= 0) {
+        resetGame()
     } else if(key == 'Escape' && gameRunning === true) {
         pauseGame()
     }
@@ -116,23 +118,32 @@ let planetArray = []
 let gameRunning = true
 
 function pauseGame() {
-    let pauseText = createText('PAUSED', canvas.width * 0.36, canvas.height * 0.5, 'red')
-    let continueText = createText('Press "ENTER" to Continue', canvas.width * 0.36, canvas.height * 0.6, 'blue')
+    let pauseText = createText('PAUSED', canvas.width * 0.36, canvas.height * 0.5, 'white')
+    let continueText = createText('Press "ENTER" to Continue', canvas.width * 0.36, canvas.height * 0.6, 'white')
     pauseText.update('PAUSED', canvas.width * 0.36, canvas.height * 0.5)
     continueText.update('Press "ENTER" to Continue', canvas.width* 0.05, canvas.height * 0.6)
     gameRunning = false
 }
 
 function deathMenu() {
-    let deathText = createText('Du dog lol!', canvas.width * 0.5, canvas.height * 0.5, 'red')
-    deathText.update('Du dog lol', canvas.width * 0.3, canvas.height * 0.5)
+    let deathText = createText('You died!', canvas.width * 0.32, canvas.height * 0.5, 'red')
+    deathText.update('You died!', canvas.width * 0.32, canvas.height * 0.5)
+    let restartText = createText('Press "R" to Restart', canvas.width * 0.5, canvas.height * 0.5, 'red')
+    restartText.update('Press "R" to Restart', canvas.width * 0.17, canvas.height * 0.6)
     gameRunning = false;
 }
 
 function resumeGame() {
     gameRunning = true
-    // rocket.health = 100
     animate();
+}
+
+function resetGame() {
+    rocket.health = 100
+    scoreSystem.score = 0
+    planetArray = []
+    gameRunning = true
+    animate()
 }
 
 window.onload = function () {

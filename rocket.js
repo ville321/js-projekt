@@ -20,20 +20,20 @@ class Rocket {
         this.color = '#9171f8'
         this.health = health
         this.healthText = createText(this.health, canvas.width * 0.02, canvas.height * 0.95, 'red')
-        this.ammoText = createText(this.ammoCount, canvas.width * 0.85, canvas.height * 0.95, 'red')
+        // this.ammoText = createText(this.ammoCount, canvas.width * 0.85, canvas.height * 0.95, 'red')
         this.movement = [false, false]
         this.projectileObjects = []
         this.fireObjects = []
         this.powerUpObjects = []
-        this.ammoCount = 500
+        // this.ammoCount = 500
         this.rocketImage = rocketImage
     }
 
     shoot() {
-        if (this.ammoCount > 0) {
+        // if (this.ammoCount > 0) {
         this.projectileObjects.push(new RocketProjectile(this.x + this.width/2, this.y, 4, -9))
-        this.ammoCount -= 1
-        }
+        // this.ammoCount -= 1
+        // }
     }
 
     draw(planets) {
@@ -53,7 +53,7 @@ class Rocket {
         for(let i = 0; i < this.fireObjects.length; i++) {
             this.fireObjects[i].update()
         }
-        this.ammoText.update(this.ammoCount, canvas.width * 0.85, canvas.height * 0.95)
+        // this.ammoText.update(this.ammoCount, canvas.width * 0.85, canvas.height * 0.95)
         this.healthText.update(this.health + "%", canvas.width * 0.02, canvas.height * 0.95)
 
         resetShadow()

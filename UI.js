@@ -57,7 +57,8 @@ class ScoreSystem {
         this.color = color
         this.multiplier = 10
         this.score = 0
-        this.currentwave = 0
+        this.currentWave = 0
+        this.maxWave = 50000
         this.scoreboard = createText(this.score, this.x, this.y, this.color)
     }
 
@@ -71,9 +72,9 @@ class ScoreSystem {
 
     update() {
         this.score += 1 * this.multiplier
-        if (this.score - this.currentwave > 5000) {
+        if (this.score - this.currentWave > 5000 && this.currentWave < this.maxWave) {
             this.wave()
-            this.currentwave = this.score
+            this.currentWave = this.score
         }
         this.draw()
     }
