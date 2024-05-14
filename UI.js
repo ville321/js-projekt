@@ -30,7 +30,6 @@ class Text {
         this.y = y
         this.txt = text
         this.color = color
-        //this.color = 'red'
     }
 
     draw() {
@@ -42,9 +41,7 @@ class Text {
         resetShadow()
     }
 
-    update(newText, x, y) {
-        this.x = x
-        this.y = y
+    update(newText) {
         this.txt = newText
         this.draw()
     }
@@ -67,7 +64,7 @@ class ScoreSystem {
     }
 
     draw() {
-        this.scoreboard.update(this.score, this.x, this.y, this.color)
+        this.scoreboard.update(this.score)
     }
 
     update() {

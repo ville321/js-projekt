@@ -1,6 +1,21 @@
 canvas = document.querySelector('canvas')
 c = canvas.getContext('2d')
 
+// Background + rocket images
+const rocketPNG = document.getElementById('rocket')
+const stars1 = document.getElementById('stars1')
+const stars2 = document.getElementById('stars2')
+const earth = document.getElementById('earth')
+
+// Rocket projectile + Planet images
+const RocketProjectilePNG = document.getElementById('projectile')
+const planetClassArray = document.getElementsByClassName('planet')
+const planetSpriteArray = []
+for (let i = 0; i < planetClassArray.length; i++) {
+    planetSpriteArray.push([planetClassArray[i]])
+}
+
+
 canvas.height = window.innerHeight
 if (window.innerWidth < 700) {
     canvas.width = window.innerWidth
@@ -25,7 +40,7 @@ document.addEventListener('keydown', function(event) {
         rocket.movement[1] = true
     } else if(key === ' ') {
         rocket.shoot()
-    } else if(key === 'k') {
+    } else if(key === 'k') { //För att kunna testa dödsmenyn osv utan att behöva vänta på att dö<
         rocket.health = 0
     } else if(key === 'Enter' && gameRunning === false  && rocket.health > 0) {
         resumeGame()
@@ -45,31 +60,6 @@ document.addEventListener('keyup', function(event) {
     }
 })
 
-class Gamestate {
-    constructor(gamestate) {
-        this.gamestate = gamestate
-    }
-
-    runGame() {
-        if (planetArray.length === 0) {
-            initialize()
-        }
-        background1.update()
-        background2.update()
-        for (let i = 0; i < planetArray.length; i++) {
-            planetArray[i].update(rocket)
-        }
-        rocket.update(planetArray)
-        scoreSystem.update()
-    }
-    gamestateHandler() {
-        switch (this.gamestate) {
-            case 0:
-                this.runGame()
-        }
-    }
-}
-
 function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -83,53 +73,45 @@ function initialize() {
     scoreSystem = new ScoreSystem(canvas.width * 0.02, canvas.height * 0.075, "red")
 }
 
+function runGame() {
+    if (planetArray.length === 0) {
+        initialize()
+    }
+    background1.update()
+    background2.update()
+    c.drawImage(earth, -150, canvas.height * 0.9, 1000, 700)
+    for (let i = 0; i < planetArray.length; i++) {
+        planetArray[i].update(rocket)
+    }
+    rocket.update(planetArray)
+    scoreSystem.update()
+}
+
 // Main loopen för spelet
 function animate() {
     if (!gameRunning) return;
-
     requestAnimationFrame(animate)
     c.clearRect(0, 0, canvas.width, canvas.height)
-    gamestateObject.gamestateHandler()
+    runGame()
 }
-
-// Background + rocket images
-const rocketPNG = document.getElementById('rocket')
-const stars1 = document.getElementById('stars1')
-const stars2 = document.getElementById('stars2')
-
-// Powerup images
-const ammoPowerupPNG = document.getElementById('ammoPowerUp')
-
-// Rocket projectile + Planet images
-const RocketProjectilePNG = document.getElementById('projectile')
-const planetClassArray = document.getElementsByClassName('planet')
-const planetSpriteArray = []
-for (let i = 0; i < planetClassArray.length; i++) {
-    planetSpriteArray.push([planetClassArray[i]])
-}
-
-let gamestateObject = new Gamestate(0)
-let scoreSystem
-let rocketPicture
-let background1
-let background2
-let rocket
-let planetArray = []
-let gameRunning = true
 
 function pauseGame() {
-    let pauseText = createText('PAUSED', canvas.width * 0.36, canvas.height * 0.5, 'white')
-    let continueText = createText('Press "ENTER" to Continue', canvas.width * 0.36, canvas.height * 0.6, 'white')
-    pauseText.update('PAUSED', canvas.width * 0.36, canvas.height * 0.5)
-    continueText.update('Press "ENTER" to Continue', canvas.width* 0.05, canvas.height * 0.6)
+    let pauseTextWidth = c.measureText('PAUSED').width
+    let pauseText = createText('PAUSED', (canvas.width - pauseTextWidth) / 2, canvas.height * 0.5, 'white')
+    let continueTextWidth = c.measureText('Press "ENTER" to Continue').width
+    let continueText = createText('Press "ENTER" to Continue', (canvas.width - continueTextWidth) / 2, canvas.height * 0.6, 'white')
+    pauseText.update('PAUSED')
+    continueText.update('Press "ENTER" to Continue')
     gameRunning = false
 }
 
 function deathMenu() {
-    let deathText = createText('You died!', canvas.width * 0.32, canvas.height * 0.5, 'red')
-    deathText.update('You died!', canvas.width * 0.32, canvas.height * 0.5)
-    let restartText = createText('Press "R" to Restart', canvas.width * 0.5, canvas.height * 0.5, 'red')
-    restartText.update('Press "R" to Restart', canvas.width * 0.17, canvas.height * 0.6)
+    let deathTextWidth = c.measureText('You died!').width
+    let deathText = createText('You died!', (canvas.width - deathTextWidth) / 2, canvas.height * 0.5, 'red')
+    let restartTextWidth = c.measureText('Press "R" to Restart').width
+    let restartText = createText('Press "R" to Restart', (canvas.width - restartTextWidth) / 2, canvas.height * 0.6, 'red')
+    deathText.update('You died!')
+    restartText.update('Press "R" to Restart')
     gameRunning = false;
 }
 
@@ -142,9 +124,17 @@ function resetGame() {
     rocket.health = 100
     scoreSystem.score = 0
     planetArray = []
-    gameRunning = true
-    animate()
+    resumeGame()
 }
+
+
+let scoreSystem
+let rocketPicture
+let background1
+let background2
+let rocket
+let planetArray = []
+let gameRunning = true
 
 window.onload = function () {
 animate()

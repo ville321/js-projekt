@@ -1,11 +1,11 @@
 function createPlanets(count, spriteArray) {
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < count; i++) { //for loop med count så att man kan välja hur många planeter man vill skapa när man kallar funktionen
         let spriteWidth = 100
         let sprite = spriteArray[randomInt(0, spriteArray.length - 1)][0]
         let x = randomInt(0, canvas.width - spriteWidth)
         const y = 10
         let velocity = randomInt(2, 4)
-        planetArray.push(new Planet(x, y, velocity, sprite))
+        planetArray.push(new Planet(x, y, velocity, sprite))//Pushar planetobjektet till en array
     }
 }
 
@@ -80,9 +80,11 @@ class Planet {
             this.spriteWidth, this.spriteHeight, 
             this.x, this.y, 100, 100
         )
+
         resetShadow()
+
         if (this.runCounter === this.spriteVel) {
-            this.frameIndex = (this.frameIndex + 1) % this.totalFrames; // Uppdatera frameIndex
+            this.frameIndex = (this.frameIndex + 1) % this.totalFrames;
             this.runCounter = 0
         }
         this.runCounter++
@@ -91,7 +93,7 @@ class Planet {
     update(rocket) {
         if (this.exploded === false) {
             this.y += this.vel
-            if(this.y + this.spriteHeight / 2 > canvas.height) {
+            if(this.y + this.spriteHeight / 2 > canvas.height) { //kollision med botten av skärmen 
                 
                 if(rocket.health > 0){
                 rocket.health -= 10
